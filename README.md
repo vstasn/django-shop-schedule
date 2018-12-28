@@ -1,5 +1,7 @@
 # Api methods
 
+[![CircleCI](https://circleci.com/gh/vstasn/django-shop-schedule.svg?style=svg)](https://circleci.com/gh/vstasn/django-shop-schedule)
+
 # Open API
 # User
 /api/user/register/
