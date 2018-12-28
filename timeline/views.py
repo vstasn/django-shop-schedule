@@ -5,7 +5,7 @@ from .serializers import UserSerializer, ShopSerializer, ShopCloseSerializer, Sh
 from .models import Shop
 
 
-@api_view(["POST"])
+@api_view(['POST'])
 @permission_classes((permissions.AllowAny,))
 def create_user(request):
     serialized = UserSerializer(data=request.data)
@@ -19,7 +19,7 @@ def create_user(request):
 class IsOwner(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj=None):
-        '''allow to get object if AnyAllow permission is set'''
+        '''Instance must have an attribute named owner'''
         return obj.owner == request.user
 
 

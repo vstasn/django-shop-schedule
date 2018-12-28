@@ -14,6 +14,10 @@ class Shop(models.Model):
     )
 
     def is_working(self):
+        """
+        Combine 2 methods
+        """
+
         if self.is_dayoff():
             return False
 
@@ -23,9 +27,17 @@ class Shop(models.Model):
         return True
 
     def is_dayoff(self):
+        """
+        Find rows in daysoff table, if shop owner set daysoff breaks on some days
+        """
+
         return self.timeline_daysoff.is_closed().exists()
 
     def by_working_time(self, dt=None):
+        """
+        Check shop is working at the moment by shop standard schedule
+        """
+
         if dt is None:
             dt = timezone.now()
 
@@ -80,7 +92,7 @@ class EntryManager(models.Manager):
 class Entry(models.Model):
     objects = EntryManager()
     shop = models.ForeignKey(
-        "Shop", related_name="timeline_entries", on_delete=models.CASCADE
+        'Shop', related_name='timeline_entries', on_delete=models.CASCADE
     )
     # from 0 to 6
     day_of_week = models.PositiveSmallIntegerField()
@@ -92,6 +104,9 @@ class Entry(models.Model):
     """
     from_time = models.PositiveIntegerField()
     to_time = models.PositiveIntegerField()
+
+    class Meta:
+        index_together = ['from_time', 'to_time']
 
 
 class DaysoffManager(models.Manager):
@@ -110,8 +125,8 @@ class DaysoffManager(models.Manager):
 class Daysoff(models.Model):
     objects = DaysoffManager()
     shop = models.ForeignKey(
-        "Shop",
-        related_name="timeline_daysoff",
+        'Shop',
+        related_name='timeline_daysoff',
         on_delete=models.CASCADE,
         blank=True,
         null=True,
@@ -119,3 +134,6 @@ class Daysoff(models.Model):
 
     from_date = models.DateField(default=datetime.date.today)
     to_date = models.DateField(blank=True, null=True)
+
+    class Meta:
+        index_together = ['from_date', 'to_date']

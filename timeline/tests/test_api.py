@@ -185,7 +185,7 @@ class ShopAPITest(BaseAPITest):
                 'day_of_week': 0,
                 'from_time': '11.00',
                 'to_time': '20.00',
-                'breaks': json.dumps([{"from_time": "11.30", "to_time": "12.30"}])
+                'breaks': json.dumps([{'from_time': '11.30', 'to_time': '12.30'}])
             }
         )
 
