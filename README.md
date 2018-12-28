@@ -15,7 +15,7 @@
 /api/shop/<pk:int>/is_working
 - Check if shop is working now
 
-# Should to auth before for this methods
+# Should auth before for this methods
 /api/shop
 - Create new shop with owner=request.user
 
