@@ -80,24 +80,24 @@ def diff_entry_slots(day_of_week, entries):
     next_day_noon = datetime.timedelta(hours=23, minutes=59)
 
     extra_filter = []
+
+    def add_extra(day_of_week, from_time, to_time):
+        extra_filter.append((
+            format_entry_time(day_of_week, from_time),
+            format_entry_time(day_of_week, to_time),
+        ))
+
     for entry in entries:
         from_time, to_time = entry
         from_time_delta = from_time
         if to_time < from_time and from_time_delta < next_day_noon:
-            extra_filter.append((
-                format_entry_time(day_of_week, from_time),
-                format_entry_time(day_of_week, next_day_noon),
-            ))
-            day_of_week = 0 if day_of_week == 6 else day_of_week
+            # if time_to more then 00:00, should separate on 2 row,
+            add_extra(day_of_week, from_time, next_day_noon)
+            # if a day is the last day of week, need to change
+            day_of_week = 0 if day_of_week == 6 else day_of_week + 1
             timedelta_from = datetime.timedelta(hours=0, minutes=0)
-            extra_filter.append((
-                format_entry_time(day_of_week, timedelta_from),
-                format_entry_time(day_of_week, to_time),
-            ))
+            add_extra(day_of_week, timedelta_from, to_time)
         else:
-            extra_filter.append((
-                format_entry_time(day_of_week, from_time),
-                format_entry_time(day_of_week, to_time),
-            ))
+            add_extra(day_of_week, from_time, to_time)
 
     return extra_filter
