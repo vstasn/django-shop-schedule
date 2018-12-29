@@ -3,6 +3,10 @@ import calendar
 import datetime
 
 
+end_of_the_day = datetime.timedelta(hours=23, minutes=59)
+start_of_the_day = datetime.timedelta(hours=0, minutes=0)
+
+
 def format_timedelta(td):
     minutes, seconds = divmod(td.seconds + td.days * 86400, 60)
     hours, minutes = divmod(minutes, 60)
@@ -22,6 +26,13 @@ def format_time_for_view(str_time):
     str_time = str(str_time)
     full_date = datetime.datetime.strptime(str_time.zfill(5), '%w%H%M')
     return '{:02d}.{:02d}'.format(full_date.hour, full_date.minute)
+
+
+def check_if_finish_time_is_next_day(from_time, to_time):
+    if to_time < from_time and from_time <= end_of_the_day:
+        return True
+    else:
+        return False
 
 
 def week_default():
@@ -83,8 +94,6 @@ def add_entry_slots(day_of_week, from_time, to_time, breaks):
 
 
 def diff_entry_slots(day_of_week, entries):
-    next_day_noon = datetime.timedelta(hours=23, minutes=59)
-
     extra_filter = []
 
     def add_extra(day_of_week, from_time, to_time):
@@ -95,14 +104,12 @@ def diff_entry_slots(day_of_week, entries):
 
     for entry in entries:
         from_time, to_time = entry
-        from_time_delta = from_time
-        if to_time < from_time and from_time_delta < next_day_noon:
+        if check_if_finish_time_is_next_day(from_time, to_time):
             # if time_to more then 00:00, should separate on 2 row,
-            add_extra(day_of_week, from_time, next_day_noon)
+            add_extra(day_of_week, from_time, end_of_the_day)
             # if a day is the last day of week, need to change
             day_of_week = 0 if day_of_week == 6 else day_of_week + 1
-            timedelta_from = datetime.timedelta(hours=0, minutes=0)
-            add_extra(day_of_week, timedelta_from, to_time)
+            add_extra(day_of_week, start_of_the_day, to_time)
         else:
             add_extra(day_of_week, from_time, to_time)
 
