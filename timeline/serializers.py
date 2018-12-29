@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import Shop, Daysoff
 from itertools import groupby
-from timeline.schedule import from_str_to_time
+from timeline.schedule import from_str_to_time, format_time_for_view
 
 User = get_user_model()
 
@@ -39,11 +39,20 @@ class ShopSerializer(serializers.ModelSerializer):
         return instance.is_working()
 
     def schedule(self, instance):
+
+        def prepare_data(row):
+            return {
+                'from_time': format_time_for_view(row['from_time']),
+                'to_time': format_time_for_view(row['to_time'])
+            }
+
         entries = instance.timeline_entries.all().values(
-            'from_time', 'to_time', 'day_of_week'
+            'from_time', 'to_time', 'day_of_week',
         )
         # group rows by day_of_week
-        return {k: list(each) for k, each in groupby(entries, key=lambda x: x['day_of_week'])}
+        result = {k: list(each) for k, each in groupby(entries, key=lambda x: x['day_of_week'])}
+        # update format
+        return {day: list(map(prepare_data, row)) for day, row in result.items()}
 
 
 class ShopUpdateSerialized(serializers.ModelSerializer):

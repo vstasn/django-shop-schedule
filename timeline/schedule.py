@@ -18,6 +18,12 @@ def format_entry_time(day_of_week, time):
     return f'{day_of_week}{format_timedelta(time)}'
 
 
+def format_time_for_view(str_time):
+    str_time = str(str_time)
+    full_date = datetime.datetime.strptime(str_time.zfill(5), '%w%H%M')
+    return '{:02d}.{:02d}'.format(full_date.hour, full_date.minute)
+
+
 def week_default():
     calendar_ = calendar.Calendar(firstweekday=0)
     from_calendar = {}
