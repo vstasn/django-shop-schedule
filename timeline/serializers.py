@@ -39,20 +39,11 @@ class ShopSerializer(serializers.ModelSerializer):
         return instance.is_working()
 
     def schedule(self, instance):
-        result = {}
-        entries = instance.timeline_entries.all().values()
-        d = {k: list(each) for k, each in groupby(entries, key=lambda x: x['day_of_week'])}
+        entries = instance.timeline_entries.all().values(
+            'from_time', 'to_time', 'day_of_week'
+        )
 
-        for day_of_week, rows in d.items():
-            working_hours = []
-            for row in rows:
-                working_hours.append({
-                    'from_time': row['from_time'],
-                    'to_time': row['to_time'],
-                })
-            result[day_of_week] = working_hours
-
-        return result
+        return {k: list(each) for k, each in groupby(entries, key=lambda x: x['day_of_week'])}
 
 
 class ShopUpdateSerialized(serializers.ModelSerializer):
