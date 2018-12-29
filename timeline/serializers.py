@@ -42,7 +42,7 @@ class ShopSerializer(serializers.ModelSerializer):
         entries = instance.timeline_entries.all().values(
             'from_time', 'to_time', 'day_of_week'
         )
-
+        # group rows by day_of_week
         return {k: list(each) for k, each in groupby(entries, key=lambda x: x['day_of_week'])}
 
 
@@ -73,7 +73,7 @@ class ShopCloseSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         """
-        Check that start is before finish.
+        Check that from_date is before to_date.
         """
         if 'from_date' in data and 'to_date' in data:
             if data['from_date'] > data['to_date']:
