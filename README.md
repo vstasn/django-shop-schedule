@@ -6,13 +6,13 @@
 
 ### API Resources
 
-  -[POST /api/user/register/](#user-register)
-  -[POST /api/user/login/](#user-login)
-  -[POST /api/shop/](#create-shop)
-  -[POST /api/shop/[id]/schedule](#get-schedule)
-  -[POST /api/shop/[id]/is_working](#check-is-working)
-  -[POST /api/shop/[id]/update_schedule](#update-schedule)
-  -[POST /api/shop/[id]/close](#close-shop)
+  - [POST /api/user/register/](#user-register)
+  - [POST /api/user/login/](#user-login)
+  - [POST /api/shop/](#create-shop)
+  - [POST /api/shop/[id]/schedule](#get-schedule)
+  - [POST /api/shop/[id]/is_working](#check-is-working)
+  - [POST /api/shop/[id]/update_schedule](#update-schedule)
+  - [POST /api/shop/[id]/close](#close-shop)
 
 ### POST /api/user/register/
 
