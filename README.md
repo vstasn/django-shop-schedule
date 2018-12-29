@@ -30,14 +30,22 @@ Create new shop with owner=request.user
 
 Get shop schedule
 
+Example: http://example.com/api/shop/[id]/schedule
+
 ### POST /api/shop/[id]/is_working
 
 Check if shop is working now
+
+Example: http://example.com/api/shop/[id]/is_working
 
 ### POST /api/shop/[id]/update_schedule
 
 Update shop schedule
 
+Example: http://example.com/api/shop/[id]/update_schedule
+
 ### POST /api/shop/[id]/close
 
 Close shop (can set a few days)
+
+Example: http://example.com/api/shop/[id]/close

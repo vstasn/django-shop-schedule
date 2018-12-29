@@ -5,15 +5,19 @@ from .serializers import UserSerializer, ShopSerializer, ShopCloseSerializer, Sh
 from .models import Shop
 
 
-@api_view(['POST'])
-@permission_classes((permissions.AllowAny,))
-def create_user(request):
-    serialized = UserSerializer(data=request.data)
+def create_object_if_valid(serialized):
     if serialized.is_valid():
         serialized.save()
         return Response(serialized.data, status=status.HTTP_201_CREATED)
     else:
         return Response(serialized._errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes((permissions.AllowAny,))
+def create_user(request):
+    serialized = UserSerializer(data=request.data)
+    return create_object_if_valid(serialized)
 
 
 class IsOwner(permissions.BasePermission):
@@ -32,12 +36,8 @@ class ShopDetail(viewsets.ModelViewSet):
     permission_classes = [IsOwner, permissions.IsAuthenticated]
 
     def create(self, request):
-        serializer = ShopSerializer(data=request.data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer._errors, status=status.HTTP_400_BAD_REQUEST)
+        serialized = ShopSerializer(data=request.data, context={'request': request})
+        return create_object_if_valid(serialized)
 
     @action(methods=['post'], detail=True, )
     def update_schedule(self, request, pk=None):
