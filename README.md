@@ -6,13 +6,13 @@
 
 ### API Resources
 
-  - [POST /api/user/register/](#user-register)
-  - [POST /api/user/login/](#user-login)
-  - [POST /api/shop/](#create-shop)
-  - [POST /api/shop/[id]/schedule](#get-schedule)
-  - [POST /api/shop/[id]/is_working](#check-is-working)
-  - [POST /api/shop/[id]/update_schedule](#update-schedule)
-  - [POST /api/shop/[id]/close](#close-shop)
+-   [POST /api/user/register/](#user-register)
+-   [POST /api/user/login/](#user-login)
+-   [POST /api/shop/](#create-shop)
+-   [POST /api/shop/\[id\]/schedule](#get-schedule)
+-   [POST /api/shop/\[id\]/is_working](#check-is-working)
+-   [POST /api/shop/\[id\]/update_schedule](#update-schedule)
+-   [POST /api/shop/\[id\]/close](#close-shop)
 
 ### POST /api/user/register/
 
@@ -30,22 +30,22 @@ Create new shop with owner=request.user
 
 Get shop schedule
 
-Example: http://example.com/api/shop/[id]/schedule
+Example: <http://example.com/api/shop/[id]/schedule>
 
 ### POST /api/shop/[id]/is_working
 
 Check if shop is working now
 
-Example: http://example.com/api/shop/[id]/is_working
+Example: <http://example.com/api/shop/[id]/is_working>
 
 ### POST /api/shop/[id]/update_schedule
 
 Update shop schedule
 
-Example: http://example.com/api/shop/[id]/update_schedule
+Example: <http://example.com/api/shop/[id]/update_schedule>
 
 ### POST /api/shop/[id]/close
 
 Close shop (can set a few days)
 
-Example: http://example.com/api/shop/[id]/close
+Example: <http://example.com/api/shop/[id]/close>
