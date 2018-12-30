@@ -7,19 +7,15 @@ end_of_the_day = datetime.timedelta(hours=23, minutes=59)
 start_of_the_day = datetime.timedelta(hours=0, minutes=0)
 
 
-def format_timedelta(td):
-    minutes, seconds = divmod(td.seconds + td.days * 86400, 60)
-    hours, minutes = divmod(minutes, 60)
-    return '{:02d}{:02d}'.format(hours, minutes)
-
-
 def from_str_to_time(data):
     hours, minutes = map(int, data.split('.'))
     return datetime.timedelta(hours=hours, minutes=minutes)
 
 
 def format_entry_time(day_of_week, time):
-    return f'{day_of_week}{format_timedelta(time)}'
+    minutes, seconds = divmod(time.seconds + time.days * 86400, 60)
+    hours, minutes = divmod(minutes, 60)
+    return '{}{:02d}{:02d}'.format(day_of_week, hours, minutes)
 
 
 def format_time_for_view(str_time):
@@ -33,6 +29,14 @@ def check_if_finish_time_is_next_day(from_time, to_time):
         return True
     else:
         return False
+
+
+def format_schedule(entry):
+    day_of_week, from_time, to_time = entry
+    return [
+        format_entry_time(day_of_week, from_time),
+        format_entry_time(day_of_week, to_time)
+    ]
 
 
 def week_default():
@@ -86,31 +90,26 @@ def add_entry_slots(day_of_week, from_time, to_time, breaks):
             break_from = to_time
             row = []
         finally:
-            result.append((from_time, break_from,))
+            result.append((day_of_week, from_time, break_from,))
             if 'to_time' in row:
                 from_time = from_str_to_time(row['to_time'])
 
-    return diff_entry_slots(day_of_week, result)
+    return diff_entry_slots(result)
 
 
-def diff_entry_slots(day_of_week, entries):
+def diff_entry_slots(entries):
     extra_filter = []
 
-    def add_extra(day_of_week, from_time, to_time):
-        extra_filter.append((
-            format_entry_time(day_of_week, from_time),
-            format_entry_time(day_of_week, to_time),
-        ))
-
     for entry in entries:
-        from_time, to_time = entry
+        day_of_week, from_time, to_time = entry
+
         if check_if_finish_time_is_next_day(from_time, to_time):
             # if time_to more then 00:00, should separate on 2 row,
-            add_extra(day_of_week, from_time, end_of_the_day)
+            extra_filter.append((day_of_week, from_time, end_of_the_day,))
             # if a day is the last day of week, need to change
             day_of_week = 0 if day_of_week == 6 else day_of_week + 1
-            add_extra(day_of_week, start_of_the_day, to_time)
-        else:
-            add_extra(day_of_week, from_time, to_time)
+            entry = (day_of_week, start_of_the_day, to_time,)
 
-    return extra_filter
+        extra_filter.append(entry)
+
+    return list(map(format_schedule, extra_filter))

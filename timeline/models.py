@@ -55,7 +55,7 @@ class Shop(models.Model):
         if is_new:
             self.__add_schedule()
 
-    def update_schedule(self, day_of_week, from_time, to_time, breaks=[]):
+    def update_schedule(self, day_of_week, from_time, to_time, breaks=None):
         entry = add_entry_slots(day_of_week, from_time, to_time, breaks)
 
         if entry is not None:
