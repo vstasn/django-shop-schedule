@@ -1,115 +1,84 @@
 from django.conf import settings
 import calendar
-import datetime
+from datetime import timedelta
+from .utils import tdeltatostr, strtotime, next_weekday
 
 
-end_of_the_day = datetime.timedelta(hours=23, minutes=59)
-start_of_the_day = datetime.timedelta(hours=0, minutes=0)
-
-
-def from_str_to_time(data):
-    hours, minutes = map(int, data.split('.'))
-    return datetime.timedelta(hours=hours, minutes=minutes)
-
-
-def format_entry_time(day_of_week, time):
-    minutes, seconds = divmod(time.seconds + time.days * 86400, 60)
-    hours, minutes = divmod(minutes, 60)
-    return '{}{:02d}{:02d}'.format(day_of_week, hours, minutes)
-
-
-def format_time_for_view(str_time):
-    str_time = str(str_time)
-    full_date = datetime.datetime.strptime(str_time.zfill(5), '%w%H%M')
-    return '{:02d}.{:02d}'.format(full_date.hour, full_date.minute)
-
-
-def check_if_finish_time_is_next_day(from_time, to_time):
-    if to_time < from_time and from_time <= end_of_the_day:
-        return True
-    else:
-        return False
-
-
-def format_schedule(entry):
-    day_of_week, from_time, to_time = entry
-    return [
-        format_entry_time(day_of_week, from_time),
-        format_entry_time(day_of_week, to_time)
-    ]
-
-
-def week_default():
+def get_default_schedule():
     calendar_ = calendar.Calendar(firstweekday=0)
-    from_calendar = {}
+    default_schedule = {}
 
     for weekday in calendar_.iterweekdays():
-        from_calendar[weekday] = settings.DEFAULT_SHOP_SCHEDULE
+        dayScheduler = DayScheduler(weekday)
+        default_schedule[weekday] = dayScheduler.create(settings.DEFAULT_SHOP_SCHEDULE)
 
-    return from_calendar
+    return default_schedule
 
 
-def schedule():
-    week_schedule = week_default()
+class DayScheduler:
+    def __init__(self, weekday, *args, **kwargs):
+        self.weekday = weekday
+        self.end_of_the_day = timedelta(hours=23, minutes=59)
+        self.start_of_the_day = timedelta(hours=0, minutes=0)
+        return super().__init__(*args, **kwargs)
 
-    week_result = {}
-    for day_of_week, data in week_schedule.items():
-        week_result[day_of_week] = calc_day_schedule(
-            day_of_week, data
+    def check_if_finish_time_is_next_day(self, from_time, to_time):
+        if to_time < from_time and from_time <= self.end_of_the_day:
+            return True
+
+        return False
+
+    def create(self, data):
+        breaks = data.get("breaks", {})
+
+        from_time = strtotime(data.get("from_time"))
+        to_time = strtotime(data.get("to_time"))
+
+        return self._add_entry_slots(from_time, to_time, breaks)
+
+    def _format_row(self, from_time, to_time, weekday=None):
+        if weekday is None:
+            weekday = self.weekday
+
+        return [tdeltatostr(weekday, from_time), tdeltatostr(weekday, to_time)]
+
+    def _add_entry_slots(self, from_time, to_time, breaks):
+        result = []
+        iter_breaks = iter(breaks)
+
+        for key in range(0, len(breaks) + 1):
+            try:
+                row = next(iter_breaks)
+                break_from = strtotime(row["from_time"]) - timedelta(minutes=1)
+            except StopIteration:
+                break_from = to_time
+                row = []
+            finally:
+                result.append((from_time, break_from))
+                if "to_time" in row:
+                    from_time = strtotime(row["to_time"])
+
+        return self._diff_entry_slots(result)
+
+    def _diff_entry_slots(self, entries):
+        extra_filter = []
+
+        for entry in entries:
+            from_time, to_time = entry
+
+            if self.check_if_finish_time_is_next_day(from_time, to_time):
+                extra_filter += self._add_next_day(from_time, to_time)
+            else:
+                extra_filter.append(self._format_row(from_time, to_time))
+
+        return extra_filter
+
+    def _add_next_day(self, from_time, to_time):
+        result = []
+        # if time_to more then 00:00, should separate on 2 row,
+        result.append(self._format_row(from_time, self.end_of_the_day))
+        # if a day is the last day of week, need to change
+        result.append(
+            self._format_row(self.start_of_the_day, to_time, next_weekday(self.weekday))
         )
-
-    return week_result
-
-
-def calc_day_schedule(day_of_week, data):
-    breaks = {}
-    if 'breaks' in data:
-        breaks = data['breaks']
-
-    from_time = from_str_to_time(
-        data['from_time']
-    )
-    to_time = from_str_to_time(
-        data['to_time']
-    )
-
-    return add_entry_slots(
-        day_of_week, from_time, to_time, breaks
-    )
-
-
-def add_entry_slots(day_of_week, from_time, to_time, breaks):
-    result = []
-    iter_breaks = iter(breaks)
-
-    for key in range(0, len(breaks) + 1):
-        try:
-            row = next(iter_breaks)
-            break_from = from_str_to_time(row['from_time']) - datetime.timedelta(minutes=1)
-        except StopIteration:
-            break_from = to_time
-            row = []
-        finally:
-            result.append((day_of_week, from_time, break_from,))
-            if 'to_time' in row:
-                from_time = from_str_to_time(row['to_time'])
-
-    return diff_entry_slots(result)
-
-
-def diff_entry_slots(entries):
-    extra_filter = []
-
-    for entry in entries:
-        day_of_week, from_time, to_time = entry
-
-        if check_if_finish_time_is_next_day(from_time, to_time):
-            # if time_to more then 00:00, should separate on 2 row,
-            extra_filter.append((day_of_week, from_time, end_of_the_day,))
-            # if a day is the last day of week, need to change
-            day_of_week = 0 if day_of_week == 6 else day_of_week + 1
-            entry = (day_of_week, start_of_the_day, to_time,)
-
-        extra_filter.append(entry)
-
-    return list(map(format_schedule, extra_filter))
+        return result
