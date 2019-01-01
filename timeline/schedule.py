@@ -20,7 +20,7 @@ class DayScheduler:
         self.weekday = weekday
         self.end_of_the_day = timedelta(hours=23, minutes=59)
         self.start_of_the_day = timedelta(hours=0, minutes=0)
-        return super().__init__(*args, **kwargs)
+        return None
 
     def check_if_finish_time_is_next_day(self, from_time, to_time):
         if to_time < from_time and from_time <= self.end_of_the_day:
