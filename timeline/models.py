@@ -55,12 +55,15 @@ class Shop(models.Model):
         if is_new:
             self.__add_schedule()
 
-    def update_schedule(self, day_of_week, data):
+    def update_schedule(self, day_of_week, is_working_day, data=None):
+        self.timeline_entries.filter(day_of_week=day_of_week).delete()
+
+        if not is_working_day:
+            return True
+
         scheduler = DayScheduler(day_of_week)
         entry = scheduler.create(data)
-
-        if entry is not None:
-            self.timeline_entries.filter(day_of_week=day_of_week).delete()
+        if entry:
             self.__create_entries(day_of_week, entry)
             return True
 

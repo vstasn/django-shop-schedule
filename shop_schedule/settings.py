@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
 import os
+import datetime
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -136,10 +137,10 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 DEFAULT_SHOP_SCHEDULE = {
-    'from_time': '08.00',
-    'to_time': '02.01',
+    'from_time': datetime.time(8, 0),
+    'to_time': datetime.time(2, 1),
     'breaks': [
-        {'from_time': '11.30', 'to_time': '12.30'},
-        {'from_time': '15.15', 'to_time': '15.25'},
+        {'from_time': datetime.time(11, 30), 'to_time': datetime.time(12, 30)},
+        {'from_time': datetime.time(15, 15), 'to_time': datetime.time(15, 25)},
     ],
 }

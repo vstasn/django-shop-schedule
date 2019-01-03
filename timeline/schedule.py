@@ -1,7 +1,7 @@
 from django.conf import settings
 import calendar
-from datetime import timedelta
-from .utils import tdeltatostr, strtotime, next_weekday
+import datetime
+from .utils import format_time, next_weekday, subminutes
 
 
 def get_default_schedule():
@@ -18,8 +18,8 @@ def get_default_schedule():
 class DayScheduler:
     def __init__(self, weekday, *args, **kwargs):
         self.weekday = weekday
-        self.end_of_the_day = timedelta(hours=23, minutes=59)
-        self.start_of_the_day = timedelta(hours=0, minutes=0)
+        self.end_of_the_day = datetime.time(hour=23, minute=59)
+        self.start_of_the_day = datetime.time(hour=0, minute=0)
         return None
 
     def check_if_finish_time_is_next_day(self, from_time, to_time):
@@ -31,8 +31,8 @@ class DayScheduler:
     def create(self, data):
         breaks = data.get("breaks", {})
 
-        from_time = strtotime(data.get("from_time"))
-        to_time = strtotime(data.get("to_time"))
+        from_time = data.get("from_time")
+        to_time = data.get("to_time")
 
         return self._add_entry_slots(from_time, to_time, breaks)
 
@@ -40,7 +40,7 @@ class DayScheduler:
         if weekday is None:
             weekday = self.weekday
 
-        return [tdeltatostr(weekday, from_time), tdeltatostr(weekday, to_time)]
+        return [format_time(weekday, from_time), format_time(weekday, to_time)]
 
     def _add_entry_slots(self, from_time, to_time, breaks):
         result = []
@@ -49,14 +49,14 @@ class DayScheduler:
         for key in range(0, len(breaks) + 1):
             try:
                 row = next(iter_breaks)
-                break_from = strtotime(row["from_time"]) - timedelta(minutes=1)
+                break_from = subminutes(row["from_time"], 1)
             except StopIteration:
                 break_from = to_time
                 row = []
             finally:
                 result.append((from_time, break_from))
                 if "to_time" in row:
-                    from_time = strtotime(row["to_time"])
+                    from_time = row["to_time"]
 
         return self._diff_entry_slots(result)
 

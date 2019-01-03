@@ -7,7 +7,6 @@ from timeline.models import Shop, Daysoff, Entry
 from timeline.views import ShopDetail
 from freezegun import freeze_time
 from django.test import override_settings
-import json
 
 User = get_user_model()
 
@@ -163,10 +162,14 @@ class ShopAPITest(BaseAPITest):
             self.view.reverse_action("update-schedule", [shop.pk]),
             {
                 "day_of_week": 0,
-                "from_time": "11.00",
-                "to_time": "20.00",
-                "breaks": json.dumps([{"from_time": "11.30", "to_time": "12.30"}]),
+                "is_working_day": True,
+                "working_schedule": {
+                    "from_time": "11:00",
+                    "to_time": "20:00",
+                    "breaks": [{"from_time": "11:30", "to_time": "12:30"}],
+                },
             },
+            format="json",
         )
 
         count = Entry.objects.filter(shop=shop, day_of_week=0).count()
@@ -177,11 +180,57 @@ class ShopAPITest(BaseAPITest):
         shop = self._create_shop(self.user)
         self.client.post(
             self.view.reverse_action("update-schedule", [shop.pk]),
-            {"day_of_week": 0, "from_time": "11.00", "to_time": "20.00"},
+            {
+                "day_of_week": 0,
+                "is_working_day": True,
+                "working_schedule": {"from_time": "11:00", "to_time": "20:00"},
+            },
+            format="json",
         )
 
         count = Entry.objects.filter(shop=shop, day_of_week=0).count()
         self.assertEqual(count, 1)
+
+    def test_shop_can_update_if_shop_is_closed(self):
+        shop = self._create_shop(self.user)
+
+        response = self.client.post(
+            self.view.reverse_action("update-schedule", [shop.pk]),
+            {"day_of_week": 0, "is_working_day": False},
+            format="json",
+        )
+
+        with freeze_time("2018-12-31 10:00:00"):
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertFalse(shop.by_working_time())
+
+    def test_shop_can_update_invalid_time(self):
+        shop = self._create_shop(self.user)
+
+        response = self.client.post(
+            self.view.reverse_action("update-schedule", [shop.pk]),
+            {
+                "day_of_week": 0,
+                "is_working_day": True,
+                "working_schedule": {"from_time": "13443:00", "to_time": "20:00"},
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_shop_can_update_if_is_working_day_is_True_should_set_working_schedule(
+        self
+    ):
+        shop = self._create_shop(self.user)
+
+        response = self.client.post(
+            self.view.reverse_action("update-schedule", [shop.pk]),
+            {"day_of_week": 0, "is_working_day": True},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
 class ApiPermissionsTest(BaseAPITest):
@@ -238,4 +287,3 @@ class ShopAPIPublicTest(BaseAPITest):
         response = self.client.post(url)
         self.assertIn("working_hours", response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-

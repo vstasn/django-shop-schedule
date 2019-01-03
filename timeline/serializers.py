@@ -55,24 +55,39 @@ class ShopSerializer(serializers.ModelSerializer):
         return {day: list(map(prepare_data, row)) for day, row in result.items()}
 
 
+class SchedulerBreaksSerialized(serializers.Serializer):
+    from_time = serializers.TimeField(format="hh:mm", required=True)
+    to_time = serializers.TimeField(format="hh:mm", required=True)
+
+
+class ScheduleSerialized(serializers.Serializer):
+    from_time = serializers.TimeField(format="hh:mm", required=True)
+    to_time = serializers.TimeField(format="hh:mm", required=True)
+    breaks = serializers.ListField(child=SchedulerBreaksSerialized(), required=False)
+
+
 class ShopUpdateSerialized(serializers.ModelSerializer):
     day_of_week = serializers.IntegerField(required=True)
-    from_time = serializers.CharField(required=True)
-    to_time = serializers.CharField(required=True)
-    breaks = serializers.JSONField(required=False)
+    is_working_day = serializers.BooleanField(required=True)
+    working_schedule = ScheduleSerialized(required=False)
 
     class Meta:
         model = Shop
-        fields = ("id", "day_of_week", "from_time", "to_time", "breaks")
+        fields = ("id", "day_of_week", "is_working_day", "working_schedule")
 
     def update_schedule(self, instance, validated_data):
         day_of_week = validated_data.get("day_of_week")
-        data = {
-            "from_time": validated_data.get("from_time"),
-            "to_time": validated_data.get("to_time"),
-            "breaks": validated_data.get("breaks", {}),
-        }
-        return instance.update_schedule(day_of_week, data)
+        is_working_day = validated_data.get("is_working_day", True)
+        schedule = validated_data.get("working_schedule", {})
+        return instance.update_schedule(day_of_week, is_working_day, schedule)
+
+    def validate(self, attrs):
+        if attrs["is_working_day"] and "working_schedule" not in attrs:
+            raise serializers.ValidationError(
+                "working_schedule can't be empty if is_working_day is True"
+            )
+
+        return super().validate(attrs)
 
 
 class ShopCloseSerializer(serializers.ModelSerializer):
@@ -82,11 +97,11 @@ class ShopCloseSerializer(serializers.ModelSerializer):
         model = Daysoff
         fields = ("id", "from_date", "to_date", "shop")
 
-    def validate(self, data):
+    def validate(self, attrs):
         """
         Check that from_date is before to_date.
         """
-        if "from_date" in data and "to_date" in data:
-            if data["from_date"] > data["to_date"]:
+        if "from_date" in attrs and "to_date" in attrs:
+            if attrs["from_date"] > attrs["to_date"]:
                 raise serializers.ValidationError("finish must occur after start")
-        return data
+        return super().validate(attrs)

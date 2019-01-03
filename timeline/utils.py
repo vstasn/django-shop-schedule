@@ -1,22 +1,18 @@
-import re
-from datetime import timedelta, datetime
+import datetime
 
 
-def strtotime(timestring):
-    timestring = re.sub("[-.:]", ":", timestring)
-    timeresult = datetime.strptime(timestring, "%H:%M")
-    return timedelta(hours=timeresult.hour, minutes=timeresult.minute)
-
-
-def tdeltatostr(day_of_week, time):
-    hours = time.seconds // 3600
-    minutes = (time.seconds // 60) % 60
-    return "{}{:02d}{:02d}".format(day_of_week, hours, minutes)
+def format_time(day_of_week, time):
+    return "{}{:02d}{:02d}".format(day_of_week, time.hour, time.minute)
 
 
 def timetostring(rtime):
-    full_date = datetime.strptime(str(rtime).zfill(5), "%w%H%M")
+    full_date = datetime.datetime.strptime(str(rtime).zfill(5), "%w%H%M")
     return "{:02d}.{:02d}".format(full_date.hour, full_date.minute)
+
+
+def subminutes(time1, minutes):
+    tmp_datetime = datetime.datetime.combine(datetime.date(1, 1, 1), time1)
+    return (tmp_datetime - datetime.timedelta(minutes=minutes)).time()
 
 
 def next_weekday(day_of_week):
